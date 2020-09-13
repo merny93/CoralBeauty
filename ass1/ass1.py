@@ -25,7 +25,7 @@ der_mat = np.zeros((x.size - 3, x.size)) ##create a full mat representation of t
 
 from scipy.linalg import toeplitz
 ##create a full mat representation of the derigvative opperator
-#this is obviously slow cause its a sparse band diagonal toeplitz matrix but python. Maybe i wont be lazy and will call something better than np.dot but probs not
+#this is obviously slow cause its a sparse band diagonal toeplitz matrix but python just matmuls it. Maybe i wont be lazy and will call something better than np.dot but probs not
 der_op = np.array([1,-8, 0, 8,-1])
 der_op = der_op/(12*dx)
 der_row = np.zeros(x.size)
@@ -37,9 +37,10 @@ der_mat = toeplitz(der_col,der_row)
 y_dir = np.dot(der_mat, y.T)
 import matplotlib.pyplot as plt
 
-# plt.plot(y_dir)
-# plt.plot(y[2:-2])
-# plt.show()
+plt.plot(x[2:-2], y_dir)
+plt.plot(x[2:-2],y[2:-2])
+plt.title("derivative of e^x")
+plt.show()
 
 print("accuracy is for e^x: ", np.std((y_dir-y[2:-2]))) 
 ###---------------------------------------------------------------------------##############
@@ -73,9 +74,10 @@ der_mat = toeplitz(der_col,der_row)
 y_dir = np.dot(der_mat, y.T)
 import matplotlib.pyplot as plt
 
-# plt.plot(y_dir)
-# plt.plot(y_dir_real[2:-2])
-# plt.show()
+plt.plot(x[2:-2], y_dir)
+plt.plot(x[2:-2], y_dir_real[2:-2])
+plt.title("derivative of e^0.01x")
+plt.show()
 
 print("accuracy is for e^0.01x: ", np.std((y_dir-y_dir_real[2:-2]))) 
 
@@ -112,9 +114,10 @@ x_fine = np.linspace(vol[0],vol[-1],num = 5000)
 
 temp_full = f_full(x_fine)
 
-# plt.plot(vol,temp, "*")
-# plt.plot(x_fine, temp_full)
-# plt.show()
+plt.plot(vol,temp, "*")
+plt.plot(x_fine, temp_full)
+plt.title("cubic interpolation of temp vs voltage")
+plt.show()
 
 #to get a rough estimat lets pretend we have a portion of the data we have, re do the above and see how well it fits the points we put asside :)
 
@@ -131,16 +134,24 @@ temp_test = temp[test_ind]
 temp_m = f_full_test(vol_test)
 print("the maxxx error is :", np.std(temp_m-temp_test))
 
+
+
+###NEXT PROBLEM
+
 ##as time goes on im less and less interested in adding comments lel
 N = 6 #chose an even power to give the polynomial a fighting chance lol
 x_c = np.linspace(-np.pi/2, np.pi/2, num=N-1)
-y_c = np.cos(x_c) +0.5
+y_c = np.cos(x_c) +0.5 ##ah so why the +0.5? good question! 
+##so part of this question is why does rat fit take a crap when you try it here. Well the answer is that the y val hits zero at pi/2 and -pi/2. 
+##this makes the mat in rat_fit singular and thus the regular inverse doesnt work and pinv gives a psudo inverse which is not great.
+##so the solution to this is simply to offset the function by  a bit so it never touches zero. No harm no fowl.
 x_f = np.linspace(-np.pi/2, np.pi/2, num=1000)
 y_f = np.cos(x_f) +0.5 
 
 
 
 
+##polyfit!
 pol = np.polyfit(x_c,y_c, N)
 y_pol = np.polyval(pol, x_f)
 
@@ -162,19 +173,27 @@ def rat_fit(x,y,n,m):
         mat[:,i]=x**i
     for i in range(1,m):
         mat[:,i-1+n]=-y*x**i
-    pars=np.dot(np.linalg.pinv(mat),y)
+    pars=np.dot(np.linalg.pinv(mat),y) ##I switched to pinv cause its just better in every way. Small singular values screw everything up in life.
     p=pars[:n]
     q=pars[n:]
     return p,q, mat
+
+##RAT FIT
+#but why simon, Why does the matrix care that it touched zero?
+##recall it is defined as mat = [1, x, x^2, ..., x^n, -yx, -yx^2, ... , -yx^m]
+##so if we have a zero y we will have a zero entry in the matrix and thus it will mean that an element of q can be anything!
+#(no matter what u multiply 0 by u still get 0) so this results in a singular matrix (it has a nul space)
 
 nom = 1
 p,q, mat = rat_fit(x_c, y_c, nom,N-nom)
 y_rat = rat_eval(p,q, x_f)
 print(p,q)
+
+##spline fit this has same number of points so its fair
 spl = interpolate.splrep(x_c, y_c)
 y_spl = interpolate.splev(x_f, spl)
 
-
+#me messing with the svd decomposition to see what the hell is happening
 # import scipy.linalg as la
 # print(mat)
 # w, v = np.linalg.eig(mat[:,:])
@@ -182,16 +201,19 @@ y_spl = interpolate.splev(x_f, spl)
 # print(la.svdvals(mat))
 
 plt.plot(x_c,y_c, "*")
-plt.plot(x_f, y_spl)
-plt.plot(x_f, y_rat)
-plt.plot(x_f, y_pol)
-plt.plot(x_f, y_f)
+plt.plot(x_f, y_spl, label="spline")
+plt.plot(x_f, y_rat, label="rational")
+plt.plot(x_f, y_pol, label="polynomial")
+plt.plot(x_f, y_f, label="reality")
+plt.title("Different fits of cos func")
+plt.legend()
 plt.show()
 
 print("std of poly:", np.std(y_f-y_pol))
 # print("std of spline:", np.std(y_f-y_spl))
 print("std of rat:", np.std(y_f-y_rat))
 
+###now for the lorezian using curve_fit which is a generalized least squares fitter i beleive
 x_c = np.linspace(-1, 1, num=N-1)
 y_c = np.cos(x_c)
 x_f = np.linspace(-1, 1, num=1000)
@@ -208,10 +230,87 @@ y_lor = lorentzian(x_f, *popt)
 
 plt.plot(x_f,y_f)
 plt.plot(x_f, y_lor)
+plt.title("lorenzien fit of cos (so similar u cant tell)")
 plt.show()
 print("std of lor:", np.std(y_f-y_lor))
+##which works increadibly well
 
-
-##next problem
+##next problem **********************************************
 
 ##symetry argument about the field being radially out yadadada this isnt an e&m class
+#E_z(z) = \frac{\lambda 2 pi R' z}{\epsilon_0 (z^2 + R'^2)^{3/2}}
+
+
+## if total charge is Q then Q = \int_0^\pi 2 \pi R \lambda \sin(\theta) d\theta = 4 \pi R \lambda but i guess this is kinda besides the point so whatever
+lamb = 1 #dont use lambda as that is a keyword in python
+e_0 = 1 #also besides the point i know its not actually 1
+R = 1 #who cares what we set R to
+
+##now we want to integrate over a sphere at position y wrt to the closest point so R' = sin(y/2R * pi)
+
+
+##to get a sphere we integrate over rings that form the sphere. where we have the field due to a ring at angle theta given by:
+def E_z(theta, z):
+    return (lamb * 2 * np.pi * R*np.sin(theta) * (z - R*np.cos(theta))) / np.power((R*np.sin(theta))**2 +   (z - R*np.cos(theta))**2, 3/2)
+
+
+## obviously singular at R so lets just avoid it
+z_vals = np.linspace(0, R*5, num=154) ##just read assignement god damn it 
+z_vals = np.append(z_vals, R)
+
+
+
+from scipy import integrate
+
+res = [integrate.quad(E_z, 0, np.pi, args=(x))[0] for x in z_vals] ##integrate over the stuffs for outside
+res = np.array(res) #magic c structure
+
+
+
+plt.scatter(z_vals, res)
+plt.title("field integrated by quad")
+plt.axvline(x=R)
+##wow it looks as expected
+plt.show()
+
+##now to stir up some shit let me use my own integrator with expected results. 
+## lets be lazy and just straight up call np.sum as a powerful integrator or for fun lets turn it into a linear oppertor
+
+##first compute E_z at all the different z of interest and all the different theta
+
+N = 1000
+theta_vec = np.linspace(0, np.pi, num = N)
+z_vec = z_vals
+
+E_z_mat = np.zeros((theta_vec.size, z_vec.size))
+theta_mat = np.zeros_like(E_z_mat) 
+theta_mat[:]= theta_vec[:,np.newaxis]
+
+z_mat = np.zeros_like(E_z_mat)
+z_mat[:] = z_vec[np.newaxis, :]
+
+E_z_mat = E_z(theta_mat, z_mat)
+
+##now the completely stupid linear operation that pertends to be a integral:
+
+int_mat = np.zeros_like(theta_vec)
+int_mat[:] = (theta_vec[-1] - theta_vec[0])/theta_vec.size
+
+
+E_z_int = np.dot(int_mat, E_z_mat) #nans are annoying and my "integrator" obviously doesnt handel them and just gives me trash for that row
+
+plt.scatter(z_vec, E_z_int)
+plt.title("field integrated by me")
+plt.axvline(x=R)
+plt.show()
+
+##lets plot the residuals cause why not
+
+plt.scatter(z_vec, res - E_z_int)
+plt.title("residuals")
+plt.axvline(x=R)
+plt.show()
+##as expected it gets bad where the function changes sharply
+
+## excluding the nan
+print("the error between my shitty solution and the good one (excluding the time difference):", np.std(res[:-1] - E_z_int[:-1]))
