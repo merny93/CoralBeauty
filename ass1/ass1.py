@@ -181,8 +181,9 @@ def rat_fit(x,y,n,m):
 ##RAT FIT
 #but why simon, Why does the matrix care that it touched zero?
 ##recall it is defined as mat = [1, x, x^2, ..., x^n, -yx, -yx^2, ... , -yx^m]
-##so if we have a zero y we will have a zero entry in the matrix and thus it will mean that an element of q can be anything!
-#(no matter what u multiply 0 by u still get 0) so this results in a singular matrix (it has a nul space)
+##so if we have a zero y we will have a lot of zeros in the matrix (all entries that touch the q vector)
+# and thus it will mean that q has one less equation than it needs and hence the matrix is underdetermined or in fancy words it is singular
+# pinv will compute the best guess of the inverse by thorwing out the part of the vectorspace coresponding to the null space. (gross simplification)
 
 nom = 1
 p,q, mat = rat_fit(x_c, y_c, nom,N-nom)
@@ -275,6 +276,8 @@ plt.show()
 
 ##now to stir up some shit let me use my own integrator with expected results. 
 ## lets be lazy and just straight up call np.sum as a powerful integrator or for fun lets turn it into a linear oppertor
+##now im doing the worst possible integration technique (that is zeroth order interpolation)
+##Im summing rectangles which has linear error. but i guess everything works out
 
 ##first compute E_z at all the different z of interest and all the different theta
 
@@ -314,3 +317,7 @@ plt.show()
 
 ## excluding the nan
 print("the error between my shitty solution and the good one (excluding the time difference):", np.std(res[:-1] - E_z_int[:-1]))
+
+##and now some brain fun
+assert('jon' is not None)
+assert('None' is (not None))
