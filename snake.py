@@ -10,6 +10,27 @@ class Game_Point:
     def set_f(self, food):
         self.f = food
 
+class Player_Direction:
+    def __init__(self, dir):
+        if dir is "right":
+            self.d = [0,1]
+        elif dir is "left":
+            self.d = [0,-1]
+        elif dir is "up":
+            self.d = [-1,0]
+        elif dir is "down":
+            self.d = [1,0]
+    def turn(self, dir):
+        if dir is "right" and self.d is not [0,-1]: 
+            self.d = [0,1]
+        elif dir is "left" and self.d is not [0,1]:
+            self.d = [0,-1]
+        elif dir is "up" and self.d is not [1,0]:
+            self.d = [-1,0]
+        elif dir is "down" and self.d is not [-1, 0]:
+            self.d = [1,0]
+
+
 def spawn_food(board_):
     available_points = []
     for row, row_list in enumerate(board_):
@@ -21,10 +42,20 @@ def spawn_food(board_):
     board_[spawn_point[0]][spawn_point[1]].set_f(True)
     return board_, spawn_point
 
+def draw_square(cor, surf, col, rect_size):
+    rect = pg.Rect(cor[1]*rect_size, cor[0]*rect_size, rect_size, rect_size)
+    pg.draw.rect(surf, col, rect)
+    return
+
+def draw_player_init(player_pos_list, surf, col, rect_size):
+    for pos in player_pos_list:
+        draw_square(pos, surf,col,rect_size)
+    return
 
 blue = (0,0,254)
 red = (254, 0, 0)
 green = (0, 254, 0)
+black = (0,0,0)
 
 board_size = (40,40)
 rect_size = 20
@@ -47,6 +78,8 @@ for i in range(init_size * 2):
     board[int(board_size[0]/2)][pos].set_p(True)
     player_pos[i,:] = [int(board_size[0]/2),pos]
 
+## init direction of motion
+player_direction = Player_Direction("left")
 ##now the first piece of food
 board, food_pos = spawn_food(board)
 
@@ -59,14 +92,31 @@ clock = pg.time.Clock()
 
 crashed = False 
 
+draw_player_init(player_pos, screen, red, rect_size)
+
 while not crashed:
 
     for event in pg.event.get():
         if event.type == pg.QUIT:
             crashed = True
-        
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_LEFT:
+                player_direction.turn("left")
+            elif event.key == pg.K_RIGHT:
+                player_direction.turn("right")
+            elif event.key == pg.K_DOWN:
+                player_direction.turn("down")
+            elif event.key == pg.K_UP:
+                player_direction.turn("up")
         print(event)
-    
+    ##update player position graphically
+    p_pos_temp = np.zeros_like(player_pos)
+    p_pos_temp[1:,:] = player_pos[:-1,:]
+    p_pos_temp[0,:] = p_pos_temp[1,:] + player_direction.d
+
+    draw_square(player_pos[-1,:], screen, black, rect_size)
+    player_pos = p_pos_temp
+    draw_square(player_pos[0,:], screen, red, rect_size)
     pg.display.update()
     clock.tick(2)
 
