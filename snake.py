@@ -2,7 +2,8 @@ import pygame as pg
 import numpy as np
 import warnings
 
-
+arrows = {"up": "up", "down": "down", "left": "left", "right": "right"}
+wasd = {"w": "up", "a": "left", "s": "down", "d":"right"}
 blue = (0,0,254)
 red = (254, 0, 0)
 green = (0, 254, 0)
@@ -53,8 +54,13 @@ class Player_Direction:
         self.set = False
 
 class Player:
-    def __init__(self, init_length, head_pos, direct, player_color, scrn, rect_size, back_color):
+    def __init__(self, init_length, head_pos, direct, player_color, scrn, rect_size, back_color, controls = None):
         
+        if controls is None:
+            self.controlled = False
+        else:
+            self.controlled = True
+            self.keys = controls
         self.color = player_color
         self.screen = scrn
         self.rect_size = rect_size
@@ -108,14 +114,9 @@ class Player:
     
     def control(self, event):
         if event.type == pg.KEYDOWN:
-            if event.key == pg.K_LEFT:
-                self.dir.turn("left")
-            elif event.key == pg.K_RIGHT:
-                self.dir.turn("right")
-            elif event.key == pg.K_DOWN:
-                self.dir.turn("down")
-            elif event.key == pg.K_UP:
-                self.dir.turn("up")
+            if pg.key.name(event.key) in self.keys:
+                self.dir.turn(self.keys[pg.key.name(event.key)])
+
 
 class Food:
     def __init__(self, col, scrn, rect_size):
@@ -154,10 +155,10 @@ class Board:
     def init_screen(self, scrn):
         self.screen = scrn
 
-    def init_player(self, pos = None, color= red, direct= "right", length= 4):
+    def init_player(self, pos = None, color= red, direct= "right", length= 4, controls = arrows):
         if pos is None:
             pos = [int(self.size[x]/2) for x in range(2)]
-        self.players.append(Player(length, pos, direct, color,self.screen, self.rect_size, self.back_color))
+        self.players.append(Player(length, pos, direct, color,self.screen, self.rect_size, self.back_color, controls=controls))
         self.players[-1].init_render()
 
     def spawn_food(self):
@@ -173,6 +174,7 @@ class Board:
                 self.spawn_food()
      
     def check_crash(self):
+        flag = False
         for player in self.players:
             for ref in self.players:
                 if id(player) == id(ref):
@@ -180,14 +182,16 @@ class Board:
                 else:
                     list_blocks = ref.pos
                 head = player.pos[0,:]
+                
                 if list(head) in list_blocks.tolist():
-                    raise RuntimeError("game over:")
+                    flag = True
                 if np.any(head<0):
-                    raise RuntimeError("game over")
+                    flag = True
                 if head[0] >= self.size[0]:
-                    raise RuntimeError("game over")
+                    flag = True
                 if head[1] >= self.size[1]:
-                    raise RuntimeError("game over")
+                    flag = True
+        return flag
 
 
 board_size = (40,40)
@@ -212,6 +216,7 @@ clock = pg.time.Clock()
 crashed = False 
 
 game_board.init_player()
+game_board.init_player(pos = [10,10], color = blue, direct= "right",length=4, controls = wasd)
 game_board.spawn_food()
 
 while not crashed:
@@ -219,15 +224,20 @@ while not crashed:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             crashed = True
-        game_board.players[game_board.p_control].control(event)
-        print(event)
+        for player in game_board.players:
+            if player.controlled:
+                player.control(event)
     ##update player position graphically
 
     for player in game_board.players:
         player.step()
         player.render_step()
     game_board.check_food()
-    game_board.check_crash()
+    if game_board.check_crash():
+        print("***************** Scores: *************")
+        for player in game_board.players:
+            print(player.color, "got:", player.pos.shape[0])
+        crashed = True
     
     pg.display.update()
     clock.tick(5)
