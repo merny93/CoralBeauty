@@ -3,12 +3,14 @@
 
 
 #### Consider the derivative as folows f'(x) = [8f(x+dx) - 8f(x-dx) - f(x+2dx) + f(x - 2dx)]/12dx
-#this will magically remove the second order problem too :)
+#this will magically remove the third order problem too :)
+##and 4th is dead since 
+##expand taylor to see this. I swear it workes 
 
 #as for the float precision. We only care about order of magnitude since anyways we are gonna make order of magnitude assumptions about the function vals
-#the error term is gonna be f''''(x)dx^3 so f' = () + dx^3 f'''' + g \epsilon f /dx
-#taking the partial with dx we get f''''dx^2 - g \epsilon f/dx^2
-##s so dx = \sqrt[4]{\frac{g\epsilon f}{f''''}}
+#the error term is gonna be f'''''(x)dx^4 so f' = (something) + dx^4 f''''' + g \epsilon f /dx
+#taking the partial with dx we get f'''''dx^3 - g \epsilon f/dx^2
+##s so dx = \sqrt[5]{\frac{\epsilon f}{f'''''}}
 
 ##coolcoolcool nodoubt nodoubt nodoubt 
 
@@ -16,7 +18,7 @@
 
 import numpy as np
 
-dx = np.power(1e-16, 0.25) ## create the dx for the unity case. it will be different if we have exp(0.001x) cause the derivatives get tinny
+dx = np.power(1e-16, 0.2) ## create the dx for the unity case. it will be different if we have exp(0.001x) cause the derivatives get tinny
 x = np.arange(-0.5,0.5, dx) ##get the xs seperated properly 
 y = np.exp(x)
 
@@ -51,9 +53,9 @@ print("accuracy is for e^x: ", np.std((y_dir-y[2:-2])))
 
 ##for the next one imma copy paste some code and only change the function and the dx (this is a good example for why functions are great in programing)
 
-##no if f=exp(0.01x) then f''''(x) = (0.01)^4exp(0.01) ~ 1e-8 so lets incorporate that
+##no if f=exp(0.01x) then f'''''(x) = (0.01)^5exp(0.01) ~ 1e-10 so lets incorporate that
 
-dx = np.power(1e-16/1e-8, 0.25) ## create the dx for the unity case. it will be different if we have exp(0.001x) cause the derivatives get tinny
+dx = np.power(1e-16/1e-10, 0.2) ## create the dx for the unity case. it will be different if we have exp(0.001x) cause the derivatives get tinny
 x = np.arange(-0.5,0.5, dx) ##get the xs seperated properly 
 y = np.exp(0.01 * x)
 y_dir_real = 0.01 *np.exp(0.01 * x)
@@ -82,7 +84,7 @@ plt.show()
 print("accuracy is for e^0.01x: ", np.std((y_dir-y_dir_real[2:-2]))) 
 
 
-###########NEXT PROBLEM 
+###########NEXT PROBLEM ****************************************************************
 
 ##seems like the first col is temp in kelvin and second col is voltage 
 vol = []
@@ -136,7 +138,7 @@ print("the maxxx error is :", np.std(temp_m-temp_test))
 
 
 
-###NEXT PROBLEM
+###NEXT PROBLEM *******************************************************
 
 ##as time goes on im less and less interested in adding comments lel
 N = 6 #chose an even power to give the polynomial a fighting chance lol
@@ -211,7 +213,7 @@ plt.legend()
 plt.show()
 
 print("std of poly:", np.std(y_f-y_pol))
-# print("std of spline:", np.std(y_f-y_spl))
+print("std of spline:", np.std(y_f-y_spl))
 print("std of rat:", np.std(y_f-y_rat))
 
 ###now for the lorezian using curve_fit which is a generalized least squares fitter i beleive
@@ -236,6 +238,44 @@ plt.show()
 print("std of lor:", np.std(y_f-y_lor))
 ##which works increadibly well
 
+####ohhh turns out i had to fit the stuff to the lorenzian doe.
+##i guess we shouldnt be surprised that a lorenzian and a cos is the same cause they are the same lol
+
+
+
+N = 6 #chose an even power to give the polynomial a fighting chance lol
+x_c = np.linspace(-1, 1, num=N-1)
+y_c = lorentzian(x_c ,1,1,0)
+x_f = np.linspace(-1, 1, num=1000)
+y_f = lorentzian(x_f ,1,1,0)
+
+##polyfit!
+pol = np.polyfit(x_c,y_c, N)
+y_pol = np.polyval(pol, x_f)
+
+
+nom = 1
+p,q, mat = rat_fit(x_c, y_c, nom,N-nom)
+y_rat = rat_eval(p,q, x_f)
+print(p,q)
+
+##spline fit this has same number of points so its fair
+spl = interpolate.splrep(x_c, y_c)
+y_spl = interpolate.splev(x_f, spl)
+
+
+plt.plot(x_c,y_c, "*")
+plt.plot(x_f, y_spl, label="spline")
+plt.plot(x_f, y_rat, label="rational")
+plt.plot(x_f, y_pol, label="polynomial")
+plt.plot(x_f, y_f, label="reality")
+plt.title("Different fits of lorezian func")
+plt.legend()
+plt.show()
+
+print("std of poly:", np.std(y_f-y_pol))
+print("std of spline:", np.std(y_f-y_spl))
+print("std of rat:", np.std(y_f-y_rat))##fits perfectly cause its a rational funciton....
 ##next problem **********************************************
 
 ##symetry argument about the field being radially out yadadada this isnt an e&m class
