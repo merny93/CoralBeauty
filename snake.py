@@ -216,7 +216,7 @@ clock = pg.time.Clock()
 crashed = False 
 
 game_board.init_player()
-game_board.init_player(pos = [10,10], color = blue, direct= "right",length=4, controls = wasd)
+#game_board.init_player(pos = [10,10], color = blue, direct= "right",length=4, controls = wasd)
 game_board.spawn_food()
 
 while not crashed:

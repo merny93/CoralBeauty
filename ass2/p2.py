@@ -25,37 +25,46 @@ def rep_base_2(num):
 ##cool so now we just need to evaluate log_2(x) between 1 and 2 which is arguably a lot lot easier
 
 
-#based around jons
-#and when i say based i mean copy pasted :)
-def cheb_fit(fun,ord):
-    x=np.linspace(-1,1,ord+1) 
-    y=fun(1.5 +x/2)
-    mat=np.zeros([ord+1,ord+1])
-    mat[:,0]=1
-    mat[:,1]=x
-    for i in range(1,ord):
-        mat[:,i+1]=2*x*mat[:,i]-mat[:,i-1]
-    coeffs=np.linalg.inv(mat)@y
-    return coeffs
+# #crappy inverting code
+# def cheb_fit(fun,ord):
+#     x=np.linspace(-1,1,ord+1) 
+#     y=fun(1.5 +x/2)
+#     mat=np.zeros([ord+1,ord+1])
+#     mat[:,0]=1
+#     mat[:,1]=x
+#     for i in range(1,ord):
+#         mat[:,i+1]=2*x*mat[:,i]-mat[:,i-1]
+#     coeffs=np.linalg.inv(mat)@y
+#     return coeffs[:]
+
+
 
 # coeffs = cheb_fit(np.log2, 10) #to init the coefficitions
+
+def cheb_fit(fun, ord, npoints):
+    x = np.linspace(-1,1, npoints)
+    y = fun(1.5 +x/2) ##somethig about poles lmao
+    A = np.polynomial.chebyshev.chebvander(x, ord) ##will simply generate the chebisheve polynomials evaluated at x
+    #lets do the svd thing
+    u,s,v = np.linalg.svd(A,0) #this is why the scipy svd is better but oh well dont feel like adding another package
+    coeffs = v.T@(np.diag(1/s)@(u.T@y))
+    return coeffs
 
 def my_log(x, coeffs): #im 2 years old so i find that name funny
     assert(x>0)
     power, to_eval = rep_base_2(x)
     ##the problem is we need to rescale log(x) = log(1.5 + y/2) where since x is between 1 and 2, y is between -1 and 1
-    the_log = np.polyval(coeffs[::-1], (to_eval-1.5)*2)
+    the_log = np.polynomial.chebyshev.chebval((to_eval-1.5)*2, coeffs)
     return power + the_log
 
 
-coeffs = cheb_fit(np.log2, 31)
+coeffs = cheb_fit(np.log2, 11, 101)
 x = np.linspace(1,100, 200)
 y = np.zeros_like(x)
 for i in range(x.size):
     y[i]= my_log(x[i],coeffs)
-
 import matplotlib.pyplot as plt
-
+print("STD of error is:", np.std(y - np.log2(x)))
 plt.plot(x,y , label = "my log")
 plt.plot(x, np.log2(x), label = "np log")
 plt.legend()
