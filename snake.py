@@ -61,6 +61,7 @@ class Player:
         else:
             self.controlled = True
             self.keys = controls
+            self.control_queue = []
         self.color = player_color
         self.screen = scrn
         self.rect_size = rect_size
@@ -92,6 +93,11 @@ class Player:
         self.to_del = [0,0]
 
     def step(self):
+
+        if self.control_queue != []:
+            self.dir.turn(self.control_queue[0])
+            self.control_queue.remove(self.control_queue[0])
+
         
         p_pos_temp = np.zeros_like(self.pos)
         p_pos_temp[1:,:] = self.pos[:-1,:]
@@ -99,6 +105,8 @@ class Player:
         self.dir.re_set()
         self.to_del = self.pos[-1,:]
         self.pos = p_pos_temp
+
+
 
     def add_block(self):
         self.pos = np.append(self.pos, [self.to_del], axis = 0)
@@ -115,7 +123,11 @@ class Player:
     def control(self, event):
         if event.type == pg.KEYDOWN:
             if pg.key.name(event.key) in self.keys:
-                self.dir.turn(self.keys[pg.key.name(event.key)])
+                if len(self.control_queue) >= 2:
+                    self.control_queue.remove(self.control_queue[0])
+                self.control_queue.append(self.keys[pg.key.name(event.key)])
+
+                
 
 
 class Food:
@@ -194,7 +206,7 @@ class Board:
         return flag
 
 
-board_size = (40,40)
+board_size = (20,20)
 rect_size = 20
 init_size = 4//2
 
@@ -238,6 +250,7 @@ while not crashed:
         for player in game_board.players:
             print(player.color, "got:", player.pos.shape[0])
         crashed = True
+        break
     
     pg.display.update()
     clock.tick(5)
