@@ -25,19 +25,10 @@ class Game_Point:
 
 class Player_Direction:
     def __init__(self, dir):
-        self.set = False
-        if dir is "right":
-            self.d = [0,1]
-        elif dir is "left":
-            self.d = [0,-1]
-        elif dir is "up":
-            self.d = [-1,0]
-        elif dir is "down":
-            self.d = [1,0]
+        dir_dict = {"right" : [0,1], "left": [0,-1], "up": [-1,0], "down": [1,0] }
+        self.d = dir_dict[dir]
     def turn(self, dir):
-        if self.set == True:
-            #already set
-            return
+        #incredibly ugly and unreadable but oh well
         if dir is "right" and not (self.d == [0,-1]): 
             self.d = [0,1]
             self.set = True
@@ -50,11 +41,9 @@ class Player_Direction:
         elif dir is "down" and not (self.d == [-1, 0]):
             self.d = [1,0]
             self.set = True
-    def re_set(self):
-        self.set = False
 
 class Player:
-    def __init__(self, init_length, head_pos, direct, player_color, scrn, rect_size, back_color, controls = None):
+    def __init__(self, init_length, head_pos, direct, player_color, scrn, rect_size, back_color, player_name = "defualt",controls = None):
         
         if controls is None:
             self.controlled = False
@@ -66,6 +55,7 @@ class Player:
         self.screen = scrn
         self.rect_size = rect_size
         self.back_color = back_color
+        self.pname = player_name
 
         self.pos = np.zeros((init_length, 2), dtype=int)
         if direct not in ["left", "right", "up", "down"]:
@@ -102,7 +92,6 @@ class Player:
         p_pos_temp = np.zeros_like(self.pos)
         p_pos_temp[1:,:] = self.pos[:-1,:]
         p_pos_temp[0,:] = p_pos_temp[1,:] + self.dir.d
-        self.dir.re_set()
         self.to_del = self.pos[-1,:]
         self.pos = p_pos_temp
 
@@ -167,10 +156,10 @@ class Board:
     def init_screen(self, scrn):
         self.screen = scrn
 
-    def init_player(self, pos = None, color= red, direct= "right", length= 4, controls = arrows):
+    def init_player(self, pos = None, color= red, direct= "right", length= 4, controls = arrows, p_name = "default"):
         if pos is None:
             pos = [int(self.size[x]/2) for x in range(2)]
-        self.players.append(Player(length, pos, direct, color,self.screen, self.rect_size, self.back_color, controls=controls))
+        self.players.append(Player(length, pos, direct, color,self.screen, self.rect_size, self.back_color, controls=controls, player_name= p_name))
         self.players[-1].init_render()
 
     def spawn_food(self):
@@ -227,7 +216,7 @@ clock = pg.time.Clock()
 
 crashed = False 
 
-game_board.init_player()
+game_board.init_player(p_name="Simon")
 #game_board.init_player(pos = [10,10], color = blue, direct= "right",length=4, controls = wasd)
 game_board.spawn_food()
 
@@ -248,7 +237,7 @@ while not crashed:
     if game_board.check_crash():
         print("***************** Scores: *************")
         for player in game_board.players:
-            print(player.color, "got:", player.pos.shape[0])
+            print(player.pname, "got:", player.pos.shape[0])
         crashed = True
         break
     
