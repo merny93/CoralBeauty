@@ -21,7 +21,7 @@ def ur_anium_decay(x, y, half_lifes = half_lifes):
 y0 = np.zeros(len(half_lifes) + 1)
 y0[0] = 1
 x0 = 0
-x1 = np.max(half_lifes)
+x1 = np.max(half_lifes)*3
 
 ans_stiff = solve_ivp(ur_anium_decay, [x0,x1], y0, method='Radau') ##obviouslty this is stiff so we should use the implicit technique
 
@@ -38,8 +38,8 @@ plt.show()
 ##clearly the uranium 238 effectivly instantly turns into lead so the majority of the decay is either in uranium 238 or in lead
 
 
-plt.plot(ans_stiff.t, ans_stiff.y[3,:], label="Uranium 234")
-plt.plot(ans_stiff.t, ans_stiff.y[4,:], label = "Thorium 230")
+plt.plot(ans_stiff.t[:], ans_stiff.y[3,:], label="Uranium 234")
+plt.plot(ans_stiff.t[:], ans_stiff.y[4,:], label = "Thorium 230")
 plt.xlabel("Time in years")
 plt.ylabel("Relative quantity")
 plt.title("Thorium and Uranium")
