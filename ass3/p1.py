@@ -1,4 +1,6 @@
 import numpy as np
+import sys
+sys.stdout = open('output/p1_out.txt', 'w')
 
 vals = []
 with open("dish_data.txt", "r") as fl:

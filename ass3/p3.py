@@ -1,7 +1,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-
+import sys
+sys.stdout = open('output/p3_out.txt', 'w')
 
 import cmb_utils as ct
 
@@ -70,6 +71,7 @@ for i in range(10):
     print("Chi^2 is now: ", chi_now := ct.my_chi(wmap, pars) )
     if np.abs(chi_now - chi_org) < 0.1:
         print("we have converged")
+        print("with errors given by :", np.sqrt(np.diag(lhs_inv)))
         break
     chi_org = chi_now
 

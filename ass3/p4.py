@@ -3,12 +3,13 @@ import cmb_utils as ct
 import time
 from matplotlib import pyplot as plt
 
-
+import sys
+sys.stdout = open('output/p4_out.txt', 'w')
 
 def run_mcmc(pars,data,corr_mat, chifun = ct.my_chi, nstep=500, time_out = 60*5):
     start_time = time.time()
     npar=len(pars)
-    chain=np.zeros([nstep,npar])
+    chain=[]
     chivec=[]
 
     chi_cur=chifun(data,pars)
@@ -20,7 +21,6 @@ def run_mcmc(pars,data,corr_mat, chifun = ct.my_chi, nstep=500, time_out = 60*5)
         pars_trial=pars+L@np.random.randn(npar)
         if pars_trial[3] < 0:
             pars_trial[3] = pars[3]
-
         chi_trial=chifun(data,pars_trial)
         #we now have chi^2 at our current location
         #and chi^2 in our trial location. decide if we take the step
@@ -29,11 +29,11 @@ def run_mcmc(pars,data,corr_mat, chifun = ct.my_chi, nstep=500, time_out = 60*5)
             print("Got new Chi: ", chi_trial)
             pars=pars_trial
             chi_cur=chi_trial
-        chain[i,:]=pars
+        chain.append(pars)
         chivec.append(chi_cur)
         if time.time() - start_time > time_out:
             break
-    return chain,np.array(chivec)
+    return np.array(chain),np.array(chivec)
 
 
 
@@ -47,7 +47,6 @@ temp_mat[4:,:3] = curvature[3:,:3]
 temp_mat[:3,4:] = curvature[:3,3:]
 curvature = temp_mat
 wmap=ct.read_wmap()
-
 data=wmap[:,0:3]
 chain,chivec=run_mcmc(pars,data,curvature,nstep=500)
 
@@ -77,3 +76,7 @@ plt.plot(chain2[:,0])
 plt.savefig("output/chain2_0.png")
 np.save("output/chain2", chain2)
 np.save("output/chivec2", chivec2)
+
+
+print("Best params are now: ", np.mean(chain2, axis = 0))
+print("with errors given by: ", np.std(chain2, axis = 0))
