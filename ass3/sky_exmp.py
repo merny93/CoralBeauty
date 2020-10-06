@@ -22,6 +22,9 @@ def get_spectrum(pars,lmax=2000):
     tt=cmb[:,0]    #you could return the full power spectrum here if you wanted to do say EE
     return tt
 
+def fit_wrap(x, pars): ##offset by 2
+    return get_spectrum(pars)[2:x.shape[0]+2]
+
 
 if __name__ == "__main__":
     pars=np.asarray([65,0.02,0.1,0.05,2e-9,0.96])
