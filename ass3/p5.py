@@ -42,7 +42,7 @@ def run_mcmc(pars,data,corr_mat, chifun = ct.my_chi, nstep=500, time_out = None)
             pass
         elif time.time() - start_time > time_out:
             break
-    return np.delete(np.array(chain),3,1) ,np.array(chivec)
+    return np.array(chain) ,np.array(chivec)
 
 
 
@@ -51,7 +51,7 @@ pars = np.load("output/newton_params.npy")
 pars = np.delete(pars,3)
 wmap=ct.read_wmap()
 data=wmap[:,0:3]
-chain,chivec=run_mcmc(pars,data,curvature,nstep=1000, time_out=60*60)
+chain,chivec=run_mcmc(pars,data,curvature,nstep=50, time_out=60*60)
 
 plt.clf()
 plt.plot(chivec)
@@ -70,7 +70,7 @@ for i in range(delt.shape[1]):
 #we get uncorrelated samples much, much faster than
 #just taking uncorrelated trial steps
 mycov=delt.T@delt/chain.shape[0]
-chain2,chivec2=run_mcmc(pars,data,mycov,nstep=5000, time_out=60*60*5)
+chain2,chivec2=run_mcmc(pars,data,mycov,nstep=200, time_out=60*60*5)
 plt.clf()
 plt.plot(chivec2)
 plt.savefig("output/chivec2_t.png")
