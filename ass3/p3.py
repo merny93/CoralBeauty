@@ -79,22 +79,30 @@ for i in range(10):
 #parameters = np.array(parameters)
 
 ##save the derivatives: they look sensible especially at the end
+##plot them at the end and at some point a little bit away
+derivs=num_deriv(ct.fit_wrap,x,pars +3*dpar*np.random.randn(6),dpar)
 plt.clf()
 plt.plot(derivatives[-1][:,0])
+plt.plot(derivs[:,0])
 plt.savefig("output/derH0")
 plt.clf()
 plt.plot(derivatives[-1][:,1])
+plt.plot(derivs[:,1])
 plt.savefig("output/der_barion_density")
 plt.clf()
 plt.plot(derivatives[-1][:,2])
+plt.plot(derivs[:,2])
 plt.savefig("output/der_cold_dark_density")
 plt.clf()
 plt.plot(derivatives[-1][:,4])
+plt.plot(derivs[:,4])
 plt.savefig("output/der_premordial")
 plt.clf()
 plt.plot(derivatives[-1][:,5])
+plt.plot(derivs[:,5])
 plt.savefig("output/der_power_law")
 
+print("Printed plots to show that the derivatives are sensible and dont change like crazy")
 
 ##lets also save the last parameters so we can use them as a starting point
 ##we also want to save the curvature matrix so we can have a good step size estimate
