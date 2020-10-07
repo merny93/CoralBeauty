@@ -1,0 +1,14 @@
+Now we do a Newthons method solver
+On the:  1  itteration and params are:  [6.73444694e+01 2.24587137e-02 1.16200452e-01 5.00000000e-02
+ 2.06919307e-09 9.66495430e-01]
+Chi^2 is now:  1234.8375416881936
+On the:  2  itteration and params are:  [6.92782314e+01 2.24931501e-02 1.14006575e-01 5.00000000e-02
+ 2.04322853e-09 9.69716915e-01]
+Chi^2 is now:  1227.937006573286
+On the:  3  itteration and params are:  [6.93261565e+01 2.24909197e-02 1.13912683e-01 5.00000000e-02
+ 2.04249790e-09 9.69760295e-01]
+Chi^2 is now:  1227.9356392403938
+we have converged
+with errors given by : [2.40035725e+00 5.39461404e-04 5.22897475e-03 3.89854015e-11
+ 1.35848619e-02]
+Printed plots to show that the derivatives are sensible and dont change like crazy

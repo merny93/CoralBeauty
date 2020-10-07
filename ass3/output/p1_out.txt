@@ -1,0 +1,4 @@
+fit params (a, x_0, y_0, z_0) in mm:  [ 1.66704455e-04 -1.36048862e+00  5.82214761e+01 -1.51231182e+03]
+focal length in mm:  1499.659984125384
+The noise in the data in mm:  3.768338648784722
+Uncertainty on the focal length in mm:  0.29899109013930814
