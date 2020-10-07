@@ -50,7 +50,7 @@ temp_mat[:3,4:] = curvature[:3,3:]
 curvature = temp_mat
 wmap=ct.read_wmap()
 data=wmap[:,0:3]
-chain,chivec=run_mcmc(pars,data,curvature,nstep=500, time_out=60*3)
+chain,chivec=run_mcmc(pars,data,curvature,nstep=1000, time_out=60*60)
 
 plt.clf()
 plt.plot(chivec)
@@ -69,7 +69,7 @@ for i in range(delt.shape[1]):
 #we get uncorrelated samples much, much faster than
 #just taking uncorrelated trial steps
 mycov=delt.T@delt/chain.shape[0]
-chain2,chivec2=run_mcmc(pars,data,mycov,nstep=1000, time_out=60*10)
+chain2,chivec2=run_mcmc(pars,data,mycov,nstep=5000, time_out=60*60*5)
 plt.clf()
 plt.plot(chivec2)
 plt.savefig("output/chivec2.png")
