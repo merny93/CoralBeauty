@@ -38,47 +38,50 @@ def run_mcmc(pars,data,corr_mat, chifun = ct.my_chi, nstep=500, time_out = None)
     return np.array(chain),np.array(chivec)
 
 
+if False:
+    curvature = np.load("output/newton_curvature.npy")
+    pars = np.load("output/newton_params.npy")
+    temp_mat = np.zeros((len(pars), len(pars)))
+    temp_mat[:3,:3] = curvature[:3,:3]
+    temp_mat[3,3] = pars[3] * 0.01
+    temp_mat[4:,4:] = curvature[3:,3:]
+    temp_mat[4:,:3] = curvature[3:,:3]
+    temp_mat[:3,4:] = curvature[:3,3:]
+    curvature = temp_mat
+    wmap=ct.read_wmap()
+    data=wmap[:,0:3]
+    chain,chivec=run_mcmc(pars,data,curvature,nstep=1000, time_out=60*60)
 
-curvature = np.load("output/newton_curvature.npy")
-pars = np.load("output/newton_params.npy")
-temp_mat = np.zeros((len(pars), len(pars)))
-temp_mat[:3,:3] = curvature[:3,:3]
-temp_mat[3,3] = pars[3] * 0.01
-temp_mat[4:,4:] = curvature[3:,3:]
-temp_mat[4:,:3] = curvature[3:,:3]
-temp_mat[:3,4:] = curvature[:3,3:]
-curvature = temp_mat
-wmap=ct.read_wmap()
-data=wmap[:,0:3]
-chain,chivec=run_mcmc(pars,data,curvature,nstep=1000, time_out=60*60)
+    plt.clf()
+    plt.plot(chivec)
+    plt.savefig("output/chivec1.png")
+    plt.clf()
+    plt.plot(chain[:,0])
+    plt.savefig("output/chain1_0.png")
+    np.save("output/chain1", chain)
+    np.save("output/chivec1", chivec)
 
-plt.clf()
-plt.plot(chivec)
-plt.savefig("output/chivec1.png")
-plt.clf()
-plt.plot(chain[:,0])
-plt.savefig("output/chain1_0.png")
-np.save("output/chain1", chain)
-np.save("output/chivec1", chivec)
-
-##this def did not converge just yet so lets do it again with the prior that we have:
-delt=chain.copy()
-for i in range(delt.shape[1]):
-    delt[:,i]=delt[:,i]-delt[:,i].mean()
-#by using a covariance matrix to draw trial steps from,
-#we get uncorrelated samples much, much faster than
-#just taking uncorrelated trial steps
-mycov=delt.T@delt/chain.shape[0]
-chain2,chivec2=run_mcmc(pars,data,mycov,nstep=5000, time_out=60*60*5)
-plt.clf()
-plt.plot(chivec2)
-plt.savefig("output/chivec2.png")
-plt.clf()
-plt.plot(chain2[:,0])
-plt.savefig("output/chain2_0.png")
-np.save("output/chain2", chain2)
-np.save("output/chivec2", chivec2)
-
+    ##this def did not converge just yet so lets do it again with the prior that we have:
+    delt=chain.copy()
+    for i in range(delt.shape[1]):
+        delt[:,i]=delt[:,i]-delt[:,i].mean()
+    #by using a covariance matrix to draw trial steps from,
+    #we get uncorrelated samples much, much faster than
+    #just taking uncorrelated trial steps
+    mycov=delt.T@delt/chain.shape[0]
+    chain2,chivec2=run_mcmc(pars,data,mycov,nstep=5000, time_out=60*60*5)
+    plt.clf()
+    plt.plot(chivec2)
+    plt.savefig("output/chivec2.png")
+    plt.clf()
+    plt.plot(chain2[:,0])
+    plt.savefig("output/chain2_0.png")
+    np.save("output/chain2", chain2)
+    np.save("output/chivec2", chivec2)
+else:
+    chain2 = np.load("output/chain2.npy")
 
 print("Best params are now: ", np.mean(chain2, axis = 0))
-print("with errors given by: ", np.std(chain2, axis = 0))
+##print 65% certainty 
+print("with lower bound for 65/100 confidence: ", np.sort(chain2, axis=0)[int(chain2.shape[0]*(1- 0.65)),:])
+print("with upper bound for 65/100 confidence: ", np.sort(chain2, axis=0)[int(chain2.shape[0]*0.65), :])
