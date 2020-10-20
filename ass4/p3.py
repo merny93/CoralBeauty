@@ -17,6 +17,6 @@ plt.clf()
 plt.plot(my_gauss_shifted_correlation)
 plt.savefig("output/my_gauss_shifted_correlation")
 
-##works as expected if you move it off to the side its not the same without a shift:
-##but as the autocorleation slides over and allines them it works as expected
-#no magic here
+#almost the same explanation as for the last problem buttttt now we shifted one of them to begin with. This means that 
+# they are the same when u shift it back so the correlation is not strongest at zero its strongest at the inverse of the shift.
+# hence a shifted gaussian is what we would expect. 

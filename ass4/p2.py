@@ -1,5 +1,5 @@
 import numpy as my_np
-
+##once again having fun with my_something
 def my_conjugate(my_array):
     return my_np.conjugate(my_array)
 
@@ -9,6 +9,9 @@ def my_fft(my_array):
 def my_inverse_fft(my_array):
     return my_np.fft.ifft(my_array)
 
+##take the fft 
+## do the multiplication by the conjugate
+## take ifft
 def my_correlation(my_first_array, my_second_array):
     assert(len(my_first_array) == len(my_second_array))
     my_first_array_discrete_fourier_transform = my_fft(my_first_array)
@@ -30,3 +33,7 @@ if __name__ == "__main__":
     plt.clf()
     plt.plot(my_gauss_self_correlation)
     plt.savefig("output/my_guass_self_correlation")
+
+##works as expected if you move it off to the side its not the same without a shift:
+##but as the autocorleation slides over and allines them it works as expected
+#no magic here
