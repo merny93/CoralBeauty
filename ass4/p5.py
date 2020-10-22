@@ -4,7 +4,8 @@ import numpy as np
 
 ## lets fft a non integer sine wave 
 x = np.arange(111)
-my_sin = np.sin(2 * np.pi * 0.123 * x)
+l = 0.123 * x.size
+my_sin = np.sin(2 * np.pi * l * x / x.size)
 
 my_ft = np.fft.fft(my_sin)
 
@@ -15,11 +16,11 @@ from matplotlib import pyplot as plt
 
 def analytic(k,l):
     comp_exp = lambda arg: np.exp(-2j* np.pi * arg)
-    term_1 = (1-comp_exp(k-0.123)/(1-comp_exp((k-0.123)/(x.size))))
-    term_2 = (1-comp_exp(k+0.123)/(1-comp_exp((k+0.123)/(x.size))))
-    return 1/(2j * (x.size)) * (term_1 - term_2)
+    term_1 = (1-comp_exp(k-l))/((1-comp_exp((k-l)/(x.size))))
+    term_2 = (1-comp_exp(k+l))/((1-comp_exp((k+l)/(x.size))))
+    return 1/(2j) * (term_1 - term_2)
 
-expected_ft = analytic(np.fft.fftfreq(x.size), 0.123)
+expected_ft = analytic(x, l)
 
 print("the difference between computed and expected: ", np.std((my_ft) - (expected_ft)))
 # print((my_ft) - (expected_ft))
@@ -28,6 +29,9 @@ plt.plot(np.abs(expected_ft), "*", label="expected")
 plt.plot(np.abs(my_ft), '*', label="computed")
 plt.legend()
 plt.savefig("output/spectral_leackage.png")
+plt.clf()
+plt.plot(np.abs(expected_ft - my_ft), "*")
+plt.savefig("output/ratio_analtocomp.png")
 ##idk why the hell they arent identical. This is some numpy sneaking bullshit
 
 
