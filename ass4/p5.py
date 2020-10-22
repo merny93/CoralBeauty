@@ -3,15 +3,34 @@ import numpy as np
 #done with the antics this will be normal code
 
 ## lets fft a non integer sine wave 
-x = np.arange(120)
+x = np.arange(111)
 my_sin = np.sin(2 * np.pi * 0.123 * x)
 
 my_ft = np.fft.fft(my_sin)
 
 from matplotlib import pyplot as plt
+
+
+##and we compare to analytics
+
+def analytic(k,l):
+    comp_exp = lambda arg: np.exp(-2j* np.pi * arg)
+    term_1 = (1-comp_exp(k-0.123)/(1-comp_exp((k-0.123)/(x.size))))
+    term_2 = (1-comp_exp(k+0.123)/(1-comp_exp((k+0.123)/(x.size))))
+    return 1/(2j * (x.size)) * (term_1 - term_2)
+
+expected_ft = analytic(np.fft.fftfreq(x.size), 0.123)
+
+print("the difference between computed and expected: ", np.std((my_ft) - (expected_ft)))
+# print((my_ft) - (expected_ft))
 plt.clf()
-plt.plot(np.abs(my_ft), "*")
+plt.plot(np.abs(expected_ft), "*", label="expected")
+plt.plot(np.abs(my_ft), '*', label="computed")
+plt.legend()
 plt.savefig("output/spectral_leackage.png")
+##idk why the hell they arent identical. This is some numpy sneaking bullshit
+
+
 
 ##now we multiply by 0.5  - 0.5 cos(...) which numpy has packaged for us as the hanning window
 

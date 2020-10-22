@@ -34,6 +34,6 @@ if __name__ == "__main__":
     plt.plot(my_gauss_self_correlation)
     plt.savefig("output/my_guass_self_correlation")
 
-##works as expected if you move it off to the side its not the same without a shift:
-##but as the autocorleation slides over and allines them it works as expected
+##works as expected if you "slide" it off to the side its not the same:
+##but as the autocorleation slides  almost all the way around it allignes once again.
 #no magic here

@@ -26,6 +26,7 @@ def my_shift(my_array, my_shift):
         my_conv[(my_shift + my_counter)%my_lenght] = 0
     return my_ans
 
+##does the convolution as requested i think
 def fft_shift(arr, shift):
     ##start by defining the array to convolve with:
     conv = np.zeros_like(arr)
@@ -45,6 +46,4 @@ if __name__ == "__main__":
     plt.plot(my_gauss_shift)
     plt.savefig("output/my_shifted_gauss.png")
 
-# yep this looks as expected since if we convolve a gaussian with itself its gonna look "the same " when you are not shifting 
-# then as u "slide" it starts to be more and more different untill the circular nature takes back over and we match on the other side
-# not surprises here
+# as expected a shifted gaussian
