@@ -29,6 +29,7 @@ for data_fname in data_fnames: #loop through each data set
     strain,dt,utc=lt.read_file(data_full_fname)
     ps, strain_white = lt.colgate(strain)
 
+
     for template_fname in template_fnames:
         template_full_fname = os.path.join(data_dir, template_fname)
         print("reading: ", template_full_fname)
@@ -57,8 +58,8 @@ for data_fname in data_fnames: #loop through each data set
                 trial_results[key] = {}
 
                 ##lets get the the width of the peak to see where it could have actually started 
-                trial_results[key]["position"] = np.argmax(np.abs(matched))
-                trial_results[key]["width"] = np.count_nonzero(np.abs(matched) > np.max(np.abs(matched))*0.65)
+                trial_results[key]["position"] = np.argmax(np.abs(matched)) #this is is some nobody knows units
+                trial_results[key]["width"] = np.count_nonzero(np.abs(matched) > np.max(np.abs(matched))*0.65) * dt
                 #i went with 65% confidence interval which is about 1 sigma as its give or take a gaussian
 
                 ##getting the signal to noise is really easy       
@@ -66,20 +67,23 @@ for data_fname in data_fnames: #loop through each data set
                 ##we want to exclude the peak so it doesnt mess with the std calculation
                 noise_loc = list(set(range(matched.size)) - set(np.arange(trial_results[key]["position"] - trial_results[key]["width"], trial_results[key]["position"] + trial_results[key]["width"])))
                 trial_results[key]["signal to noise"] = np.max(np.abs(matched))/np.std(np.take(matched, noise_loc))
+                trial_results[key]["delta chi^2"] = trial_results[key]["signal to noise"]**2 ##simply square to get delta chi^2
                 
                 #now estimated noise is given here which i dont know how to do so problem for tmr :)
                 #this needs to be sqrt(A.T N^{-1} A)
-                # but we went through a bunch of effort to pre whiten so we can take to be diagonal and to be std of strain_white
+                # But i went through all this effort to whiten the noise!!!
+                ##soooo lets make use of it. For us Ninv is very much diagonal and should be give or take 1 if i did my job right
                 Ninv = 1/ np.std(strain_white)
-
-                noise_estimate = np.sum(np.abs(template_white))*np.sqrt(Ninv)
-                noise_estimate = np.max(np.abs(matched))/np.std(template_white)
+                noise_estimate = np.sqrt(Ninv * np.dot(template_white, template_white)/  template_white.size)
                 trial_results[key]["analytic noise"] = noise_estimate
-
+                ##we can get a signal to noise estimate once again to compare apples to apples
+                trial_results[key]["analytic signal to noise"] = np.max(np.abs(matched))/noise_estimate
                 ##finally we can get the frequecy thing which comes from:
                 ft_model = np.abs(np.fft.rfft(template_white))
                 ft_cumsum = np.cumsum(ft_model)
-                trial_results[key]["median frequency"] = np.argmin(np.abs(ft_cumsum - ft_cumsum[-1]/2))
+                mid_freq_arg = np.argmin(np.abs(ft_cumsum - ft_cumsum[-1]/2))
+                freqs = np.fft.fftfreq(template_white.size, d=dt)
+                trial_results[key]["median frequency"] = freqs[mid_freq_arg]
             
                 for quant in trial_results[key]:
                     print(quant, trial_results[key][quant])

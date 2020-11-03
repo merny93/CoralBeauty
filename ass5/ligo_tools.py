@@ -33,7 +33,7 @@ def colgate(data, window = my_window, window_params=["Tukey", 0.02], spec= None,
     '''
     if spec is None:
         ##get the ft to look at noise
-        ft_noise = np.abs(((np.fft.rfft(data * window(data.size, window_params)))))**2
+        ft_noise = np.abs(((np.fft.rfft(data * window(data.size, window_params), norm="ortho"))))**2
     
         if plot_model:
             plt.clf()
@@ -87,8 +87,8 @@ def colgate(data, window = my_window, window_params=["Tukey", 0.02], spec= None,
         
         return PS, colgate(data, window_params=window_params, spec = np.sqrt(PS))
     
-    ft_white = (np.fft.rfft(data * window(data.size, window_params))) / spec
-    data_white = np.fft.irfft(ft_white)
+    ft_white = (np.fft.rfft(data * window(data.size, window_params), norm="ortho")) / spec
+    data_white = np.fft.irfft(ft_white, norm="ortho")
     return data_white
 
 def tinder_filter(y, model):
@@ -96,9 +96,9 @@ def tinder_filter(y, model):
     a matching service for pre-whitened signal
 
     '''
-    yft=np.fft.rfft(y)
-    modft=np.fft.rfft(model)
-    mycorr=np.fft.irfft(yft*np.conj(modft))
+    yft=np.fft.rfft(y, norm="ortho")
+    modft=np.fft.rfft(model, norm="ortho")
+    mycorr=np.fft.irfft(yft*np.conj(modft), norm="ortho")
     return mycorr
 
 
