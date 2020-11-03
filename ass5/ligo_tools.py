@@ -157,7 +157,7 @@ if __name__=="__main__":
     tl_white = colgate(tl, window_params=["Tukey", 0.02], spec=np.sqrt(ps))
 
     plt.clf()
-    plt.plot(np.abs(np.fft.rfft(tl_white)))
+    plt.plot(np.cumsum(np.abs(np.fft.rfft(tl_white))))
     plt.show()
 
     th_fit = tinder_filter(strain_white, th_white)
