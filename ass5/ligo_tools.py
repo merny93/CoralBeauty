@@ -101,6 +101,11 @@ def tinder_filter(y, model):
     mycorr=np.fft.irfft(yft*np.conj(modft), norm="ortho")
     return mycorr
 
+def load_key(fname):
+    import json
+    with open(fname) as json_file:
+        key_data = json.load(json_file)
+    return key_data
 
 ##jon code for reading here
 def read_template(filename):

@@ -1,0 +1,60 @@
+working on event:  GW150914
+working on detector:  fn_H1
+reading:  data\H-H1_LOSC_4_V2-1126259446-32.hdf5
+reading:  data\GW150914_4_template.hdf5
+working on detector:  fn_L1
+reading:  data\L-L1_LOSC_4_V2-1126259446-32.hdf5
+reading:  data\GW150914_4_template.hdf5
+working on event:  LVT151012
+working on detector:  fn_H1
+reading:  data\H-H1_LOSC_4_V2-1128678884-32.hdf5
+reading:  data\LVT151012_4_template.hdf5
+working on detector:  fn_L1
+reading:  data\L-L1_LOSC_4_V2-1128678884-32.hdf5
+reading:  data\LVT151012_4_template.hdf5
+working on event:  GW151226
+working on detector:  fn_H1
+reading:  data\H-H1_LOSC_4_V2-1135136334-32.hdf5
+reading:  data\GW151226_4_template.hdf5
+working on detector:  fn_L1
+reading:  data\L-L1_LOSC_4_V2-1135136334-32.hdf5
+reading:  data\GW151226_4_template.hdf5
+working on event:  GW170104
+working on detector:  fn_H1
+reading:  data\H-H1_LOSC_4_V1-1167559920-32.hdf5
+reading:  data\GW170104_4_template.hdf5
+working on detector:  fn_L1
+reading:  data\L-L1_LOSC_4_V1-1167559920-32.hdf5
+reading:  data\GW170104_4_template.hdf5
+results for data run:  GW150914fn_H1
+  Positional uncertainty (s)    Positional uncertainty (theta)    signal to noise    delta chi^2    analytic noise    analytic signal to noise    median frequency (Hz)
+----------------------------  --------------------------------  -----------------  -------------  ----------------  --------------------------  -----------------------
+                 1.67638e-08                       4.19095e-07            17.0063        289.213           29.9141                     11.3494              1.37462e+07
+results for data run:  GW150914fn_L1
+  Positional uncertainty (s)    Positional uncertainty (theta)    signal to noise    delta chi^2    analytic noise    analytic signal to noise    median frequency (Hz)    total chi^2 for both detectors:
+----------------------------  --------------------------------  -----------------  -------------  ----------------  --------------------------  -----------------------  ----------------------------------
+                 1.49012e-08                       3.72529e-07            11.9509        142.825           25.9833                     7.95862              1.52699e+07                             432.038
+results for data run:  LVT151012fn_H1
+  Positional uncertainty (s)    Positional uncertainty (theta)    signal to noise    delta chi^2    analytic noise    analytic signal to noise    median frequency (Hz)
+----------------------------  --------------------------------  -----------------  -------------  ----------------  --------------------------  -----------------------
+                 1.67638e-08                       4.19095e-07            6.13506         37.639           19.6048                     4.15117              1.04448e+07
+results for data run:  LVT151012fn_L1
+  Positional uncertainty (s)    Positional uncertainty (theta)    signal to noise    delta chi^2    analytic noise    analytic signal to noise    median frequency (Hz)    total chi^2 for both detectors:
+----------------------------  --------------------------------  -----------------  -------------  ----------------  --------------------------  -----------------------  ----------------------------------
+                 1.67638e-08                       4.19095e-07            5.55888        30.9011           18.1039                     3.73671              1.27058e+07                             68.5401
+results for data run:  GW151226fn_H1
+  Positional uncertainty (s)    Positional uncertainty (theta)    signal to noise    delta chi^2    analytic noise    analytic signal to noise    median frequency (Hz)
+----------------------------  --------------------------------  -----------------  -------------  ----------------  --------------------------  -----------------------
+                 1.67638e-08                       4.19095e-07            8.92339        79.6268           13.6024                     5.98557              1.01417e+07
+results for data run:  GW151226fn_L1
+  Positional uncertainty (s)    Positional uncertainty (theta)    signal to noise    delta chi^2    analytic noise    analytic signal to noise    median frequency (Hz)    total chi^2 for both detectors:
+----------------------------  --------------------------------  -----------------  -------------  ----------------  --------------------------  -----------------------  ----------------------------------
+                  3.1665e-08                       7.91624e-07            5.22953         27.348           9.66518                     3.49998               1.4164e+07                             106.975
+results for data run:  GW170104fn_H1
+  Positional uncertainty (s)    Positional uncertainty (theta)    signal to noise    delta chi^2    analytic noise    analytic signal to noise    median frequency (Hz)
+----------------------------  --------------------------------  -----------------  -------------  ----------------  --------------------------  -----------------------
+                 1.49012e-08                       3.72529e-07            7.07621        50.0728            24.072                     4.72404              1.29024e+07
+results for data run:  GW170104fn_L1
+  Positional uncertainty (s)    Positional uncertainty (theta)    signal to noise    delta chi^2    analytic noise    analytic signal to noise    median frequency (Hz)    total chi^2 for both detectors:
+----------------------------  --------------------------------  -----------------  -------------  ----------------  --------------------------  -----------------------  ----------------------------------
+                 3.53903e-08                       8.84756e-07            6.56613         43.114           31.2129                     4.39342              9.85088e+06                             93.1868
