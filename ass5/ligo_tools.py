@@ -28,8 +28,9 @@ def colgate(data, window = my_window, window_params=["Tukey", 0.02], spec= None,
 
     If called with no spectrum it will assume that you want to generate the noise spectrum and do so 
     It will use a window function which defualts to a hanning but can be changed to wider functions 
+    Without a spectrum it will reutrn the PS and whitened data
 
-
+    Calling with spec it will only return the whitened spectrum (it works with a recusrive call)
     '''
     if spec is None:
         ##get the ft to look at noise

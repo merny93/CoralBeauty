@@ -1,0 +1,13 @@
+Welcome fellow adventurer
+
+ligo_tools.py contains all the helper functions that do the noise model and filtering and stuff
+ligo.py has the read and extraction 
+output contains output plots and such
+
+question a is answered in ligo_tools.py
+
+questoin b is done in ligo.py
+the outputs for all other questoins are in the output/ligo.txt
+
+There are comments throughout explaining stuff :)
+
