@@ -1,0 +1,6 @@
+my c compiler doesnt want to work defaulting to jon data
+for C random numbers to be ~decent~ we at least expect the points in a given plane to be around:  605.0600000000001
+the plane fit total for C is:  1057
+99.92727993917958 percent of the points fall on these ~40 planes
+for python random numbers to be ~decent~ we at least expect the following number to be around:  200.0
+the plane fit total for python is:  242
