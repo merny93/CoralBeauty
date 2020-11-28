@@ -1,11 +1,16 @@
 import numpy as np
 import scipy as sp
 from numba import njit
+import time
+
+import matplotlib.animation as animation
 from matplotlib import pyplot as plt
 import warnings
 
+
+
 def r_squared(r,k):
-    return k/r
+    return -k/r
 
 @njit
 def fast_hash(grid_indexii, grid_shape, mass, grid):
@@ -15,13 +20,21 @@ def fast_hash(grid_indexii, grid_shape, mass, grid):
     return grid
 
 
+
 class Nbody:
-    def __init__(self, pos = None, mass = None, potential = r_squared, dimension = 3, BC = "wrap", grid_size = 1, grid_ref = 1):
+    def __init__(self, pos = None, vel = None, mass = None, potential = r_squared, dimension = 3, BC = "wrap", grid_size = 1, grid_ref = 1, dt=0.01):
         if mass is None or pos is None:
             raise ValueError
         else:
             assert(pos.shape[0] == mass.size)
             assert(pos.shape[1] == dimension)
+            if vel is None:
+
+                self.vel = np.zeros_like(pos)
+            else:
+                assert(pos.shape == vel.shape)
+                self.vel = vel
+        
         self.pos = pos
         self.m = mass
         self.dim = dimension
@@ -31,7 +44,8 @@ class Nbody:
         self.grid = self.hash()
         self.pot_func = potential
         self.pot_template = self.make_template()
-        self.pot_template = self.make_template_ft()
+        self.pot_template_ft = self.make_template_ft()
+        self.dt= dt
     def pos_to_grid(self, pos):
         return np.floor(pos/self.ref).astype(int)
     def hash(self):
@@ -49,9 +63,10 @@ class Nbody:
         if self.BC == "wrap":
             return hash_grid
         elif self.BC == "hard":
-            print("need to pad"):
+            ##we need to pad
+            print("need to pad")
             raise ValueError
-            return
+            #return
         
     def make_template(self):
         if self.BC == "wrap":
@@ -68,39 +83,73 @@ class Nbody:
         elif self.BC == "hard":
             print("not implemented yet")
             raise ValueError
-            return
+            #return
     def make_template_ft(self):
         return  sp.fft.rfftn(self.pot_template)
     def get_force(self, particle_pos, pot):
         if self.BC == "wrap":
             #delete potential due to me
             grid_pos = self.pos_to_grid(particle_pos)
-            part_pot = pot - np.roll(self.pot_template, tuple(grid_pos))
+            # part_pot = self.pot_template.copy()
+            # for dim in range(particle_pos.size):
+            #     part_pot = np.roll(part_pot, grid_pos[dim], axis=dim)
+            # part_pot = pot - part_pot
+            part_pot = pot
             #use ballanced derivative
             temp_basis = np.zeros(self.dim, dtype=int)
             temp_basis[0]=1
             basis = [np.roll(temp_basis, x) for x in range(self.dim)]
             derives = np.zeros(self.dim)
             for dir,vec in enumerate(basis):
-                derives[dir] = (part_pot[tuple((grid_pos + vec)%part_pot.shape)] - part_pot[tuple((grid_pos + vec)%part_pot.shape)])/self.ref
+                derives[dir] = (part_pot[tuple((grid_pos + vec)%part_pot.shape)] - part_pot[tuple((grid_pos - vec)%part_pot.shape)])/self.ref
             return derives
         elif self.BC == "hard":
+            ##need to handle walls i think
             print("not there yet")
             raise ValueError
-            return
-    def make_pot(self)
+            #return
+    def make_pot(self):
         #all u gotta do is convolve hopefully bc is handled for me]
         mass_ft = sp.fft.rfftn(self.grid)
         my_pot_ft = mass_ft * self.pot_template_ft
-        return sp.fft.irfftn(my_pot_ft)
+        return sp.fft.irfftn(my_pot_ft,s = self.pot_template.shape)
 
-    def step_pos(self):
+    def step_pos(self, half_step = False):
         #compute the new positions from the velocity and then rehash the density map
-        pass
+        if half_step:
+            self.pos = self.pos + self.vel*self.dt/2
+            self.grid = self.hash()
+            ##for circular BC only!!!!
+            self.pos = self.pos%self.grid_size
+            return
+        self.pos = self.pos + self.vel*self.dt
+        ##for CIcrucla rBC only
+        self.pos = self.pos%self.grid_size
+        self.grid = self.hash()
+        return
     
     def step_vel(self):
         #compute a new potential and calculate the force to step velocity
-        pass
+        potential = self.make_pot()
+        self.pot_debug = potential
+        ##now get force field:
+        #we need to roll a little to the right and a little to the left and take the difference
+        derivatives = np.zeros([self.pos.shape[1]] + list(self.grid.shape))
+        opp= np.array([derivatives.shape[i] for i in range(1, len(derivatives.shape)-1)] + [1])
+        grid_pos = self.pos_to_grid(self.pos)
+
+
+        for dim in range(self.pos.shape[1]):
+            derivatives[dim, :] = (np.roll(potential, -1, axis=dim) - np.roll(potential, 1, axis=dim))/(2*self.grid_size) 
+        #now for magic
+
+        der_flat = derivatives.reshape(derivatives.shape[0], -1)
+        indexes = np.dot(grid_pos, opp.T)
+        ordered_der = der_flat[:,indexes]
+        ordered_der = np.transpose(ordered_der)
+        self.vel = self.vel - ordered_der*self.dt /self.m[:, np.newaxis]
+        
+        return
     
     
     def plot_heatmap_2D(self):
@@ -116,3 +165,26 @@ class Nbody:
         plt.show()
         return
 
+    def run_sim(self, steps = 10000):
+        import time
+        #print(self.pos)
+        t1 = time.time()
+        self.step_pos(half_step=True)
+        #print(self.pos)
+        for hello in range(steps):
+            #print(hello)
+            t3=time.time()
+            self.step_vel()
+            t4=time.time()
+            self.step_pos()
+            t5=time.time()
+            print(t4-t3,t5-t4)
+            if hello%50 == 0:
+                #print(self.vel)
+                # print(self.vel)
+                print(self.pos)
+                #self.plot_heatmap_2D()
+                # plt.imshow(self.pot_debug)
+                pass
+        t2 = time.time()
+        print((t2-t1)/100)
