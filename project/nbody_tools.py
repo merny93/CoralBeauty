@@ -262,7 +262,8 @@ class Nbody:
     def calc_energy(self):
         ##compute the energy while we are at it
         kinetic = np.sum(sp.linalg.norm(self.vel, axis=1)*self.m)
-        potential = np.sum(sp.linalg.norm(self.derivatives, axis=0 ))
+        potential = np.sum(sp.linalg.norm(self.derivatives, axis=0 )**2)
+        assert(sp.linalg.norm(self.derivatives, axis=0 ).shape == self.grid.shape )
         return kinetic + potential
 
     
