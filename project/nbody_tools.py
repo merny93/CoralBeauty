@@ -131,7 +131,7 @@ class Nbody:
             
             #replace the 0 in the top left corner
             # ind = [0 for i in range(self.dim)]
-            # dist_grid[:, ind] = 0.5 #softening
+            #dist_grid[:, 0,0] = 0.5 #softening
             #we need more softening
             
             #now rescale the dist grid 
@@ -146,7 +146,7 @@ class Nbody:
             ind = [0 for i in range(self.dim)]
             ind_n = list(ind)
             ind_n[1] = 1
-            template[tuple(ind)] = template[tuple(ind_n)]
+            template[tuple(ind)] = 2*template[tuple(ind_n)]
             plt.imshow(template)
             plt.show()
  
