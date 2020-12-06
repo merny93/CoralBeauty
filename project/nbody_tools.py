@@ -13,6 +13,7 @@ def r_squared(r,k):
     """
     Potential used in problem
     """
+    #return k * np.log(r)
     return -k/r
 
 @njit
@@ -25,6 +26,18 @@ def fast_hash(grid_indexii, grid_shape, mass, grid):
         grid[grid_index[0], grid_index[1]] += mass[particle_num]
     return grid
 
+# for dim in range(self.pos.shape[1]):
+#             derivatives[dim, :] = (np.roll(potential, -1, axis=dim) - np.roll(potential, 1, axis=dim))/(2*self.grid_size) 
+#well this is slower than it used to be god damn it
+@njit
+def fast_diff(pot, deriv, vec,grid_size, dim,pos):
+    for i in range(pot.size):
+        #loop through entire array
+        for j in range(pos.size):
+            if pos[j] + 1 < grid_size:
+                pos[j] += 1
+                break
+        deriv[pos] = (pot[(pos+vec)%grid_size] - pot[(pos-vec)%grid_size])/(2*grid_size)
 
 
 class Nbody:
@@ -35,7 +48,7 @@ class Nbody:
 
     Run a simulation by calling run sim.
     """
-    def __init__(self, pos = None, vel = None, mass = None, potential = r_squared, dimension = 2, BC = "wrap", grid_size = 1, grid_ref = 1, dt=0.01):
+    def __init__(self, pos = None, vel = None, mass = None, potential = r_squared, dimension = 2, BC = "wrap", grid_size = 1, grid_ref = 1, dt=0.0001):
         """
         Take all the inputs and store them and do some precomputation work
         """
@@ -117,11 +130,25 @@ class Nbody:
             dist_grid = np.array(np.meshgrid(*basis_vec))
             
             #replace the 0 in the top left corner
-            dist_grid[:,0,0] = 0.5 #softening
+            # ind = [0 for i in range(self.dim)]
+            # dist_grid[:, ind] = 0.5 #softening
+            #we need more softening
+            
+            #now rescale the dist grid 
+
+            dist_grid = dist_grid/np.max(dist_grid)
 
             #generate the template using the potential function
             #this is greens funciton
             template = self.pot_func(np.linalg.norm(dist_grid, axis=0, keepdims=False), 1)
+
+            #more softeing
+            ind = [0 for i in range(self.dim)]
+            ind_n = list(ind)
+            ind_n[1] = 1
+            template[tuple(ind)] = template[tuple(ind_n)]
+            plt.imshow(template)
+            plt.show()
  
             return template
         elif self.BC == "hard":
@@ -135,9 +162,9 @@ class Nbody:
         Generate the potential from the mass distribution by convolving 
         The BC should already be handled
         """
-        mass_ft = sp.fft.rfftn(self.grid)
+        mass_ft = sp.fft.rfftn(self.grid, workers = -1)
         my_pot_ft = mass_ft * self.pot_template_ft
-        return sp.fft.irfftn(my_pot_ft,s = self.pot_template.shape)
+        return sp.fft.irfftn(my_pot_ft,s = self.pot_template.shape, workers = -1)
 
     def step_pos(self, half_step = False):
         """
@@ -174,7 +201,9 @@ class Nbody:
         """
         #compute a new potential and calculate the force to step velocity
         #this function does the convolution
+        t1 = time.time()
         potential = self.make_pot()
+        t2 = time.time()
         
         #me messing with things
         self.pot_debug = potential
@@ -195,8 +224,19 @@ class Nbody:
         grid_pos = self.pos_to_grid(self.pos)
 
         #this computes the gradiant stacking the dx,dy,dz... in axis=0 of derivatives
+        t3 = time.time()
         for dim in range(self.pos.shape[1]):
+            ## a failed attempt at making it faster lol
+            """
+            vec = np.zeros(self.dim, dtype=int)
+            vec[0] = 1
+            vec = np.roll(vec, dim)
+            pos = np.zeros_like(vec)
+            fast_diff(potential,derivatives[dim,:],vec, self.grid_size, dim,pos)
+            """
             derivatives[dim, :] = (np.roll(potential, -1, axis=dim) - np.roll(potential, 1, axis=dim))/(2*self.grid_size) 
+        t4=time.time()
+        #print(t2-t1, t4-t3)
         #now for magic
 
         #now we flatten the first axis such that it is Ndim by however many (so flatten the coordinate)
@@ -213,8 +253,18 @@ class Nbody:
 
         #update finally.....
         self.vel = self.vel - ordered_der*self.dt /self.m[:, np.newaxis] 
+
+        #save the derivatives:
+        self.derivatives = derivatives
+
+        
         return
-    
+    def calc_energy(self):
+        ##compute the energy while we are at it
+        kinetic = np.sum(sp.linalg.norm(self.vel, axis=1)*self.m)
+        potential = np.sum(sp.linalg.norm(self.derivatives, axis=0 ))
+        return kinetic + potential
+
     
     def plot_heatmap_2D(self):
         if self.dim != 2:
@@ -229,13 +279,17 @@ class Nbody:
         plt.show()
         return
 
-    def run_sim(self, steps = 10000):
+    def run_sim(self, steps = 1000, frame_return = 5):
+        """
+        Actually run the sim and return all the frames
+        """
         import time
-        #print(self.pos)
+
+        frames = []
+        pos = []
         t1 = time.time()
         self.step_pos(half_step=True)
-        #print(self.pos)
-        for hello in range(steps):
+        for step_N in range(steps):
             #print(hello)
             t3=time.time()
             self.step_vel()
@@ -243,12 +297,11 @@ class Nbody:
             self.step_pos()
             t5=time.time()
             #print(t4-t3,t5-t4)
-            if hello%50 == 0:
-                #print(self.vel)
-                # print(self.vel)
-                print(self.pos)
-                self.plot_heatmap_2D()
-                # plt.imshow(self.pot_debug)
+            if step_N%frame_return == 0:
+                frames.append(self.grid)
+                pos.append(self.pos)
+                print(self.calc_energy())
                 pass
         t2 = time.time()
         print((t2-t1)/100)
+        return {"density": frames, "position":pos}
