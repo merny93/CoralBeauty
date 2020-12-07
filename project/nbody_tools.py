@@ -29,15 +29,15 @@ def fast_hash(grid_indexii, grid_shape, mass, grid):
 # for dim in range(self.pos.shape[1]):
 #             derivatives[dim, :] = (np.roll(potential, -1, axis=dim) - np.roll(potential, 1, axis=dim))/(2*self.grid_size) 
 #well this is slower than it used to be god damn it
-@njit
-def fast_diff(pot, deriv, vec,grid_size, dim,pos):
-    for i in range(pot.size):
-        #loop through entire array
-        for j in range(pos.size):
-            if pos[j] + 1 < grid_size:
-                pos[j] += 1
-                break
-        deriv[pos] = (pot[(pos+vec)%grid_size] - pot[(pos-vec)%grid_size])/(2*grid_size)
+# @njit
+# def fast_diff(pot, deriv, vec,grid_size, dim,pos):
+#     for i in range(pot.size):
+#         #loop through entire array
+#         for j in range(pos.size):
+#             if pos[j] + 1 < grid_size:
+#                 pos[j] += 1
+#                 break
+#         deriv[pos] = (pot[(pos+vec)%grid_size] - pot[(pos-vec)%grid_size])/(2*grid_size)
 
 
 class Nbody:
@@ -48,7 +48,7 @@ class Nbody:
 
     Run a simulation by calling run sim.
     """
-    def __init__(self, pos = None, vel = None, mass = None, potential = r_squared, dimension = 2, BC = "wrap", grid_size = 1, grid_ref = 1, dt=0.0001):
+    def __init__(self, pos = None, vel = None, mass = None, potential = r_squared, dimension = 2, BC = "wrap", grid_size = 1, grid_ref = 1, dt=0.0005):
         """
         Take all the inputs and store them and do some precomputation work
         """
@@ -71,7 +71,7 @@ class Nbody:
         self.grid_size = grid_size
 
         #this is grid refinement, where it is designed to have about 1 particle per grid_ref
-        self.ref = np.power(grid_size**self.dim/(self.m.size*grid_ref), 1/self.dim)
+        self.ref = np.power(1/(self.m.size*grid_ref), 1/self.dim)
         self.grid = self.hash()
         self.pot_func = potential
         self.pot_template = self.make_template()
@@ -90,7 +90,7 @@ class Nbody:
         """
 
         #generate the grid
-        N = int(np.ceil(self.grid_size/self.ref)) 
+        N = int(np.ceil(1/self.ref)) 
         grid_shape = [N for _ in range(self.dim)]
         grid = np.zeros(grid_shape)
 
@@ -136,17 +136,17 @@ class Nbody:
             
             #now rescale the dist grid 
 
-            dist_grid = dist_grid/np.max(dist_grid)
+            dist_grid = dist_grid/np.max(dist_grid) # * self.grid_size
 
             #generate the template using the potential function
             #this is greens funciton
-            template = self.pot_func(np.linalg.norm(dist_grid, axis=0, keepdims=False), 1)
+            template = self.pot_func(np.linalg.norm(dist_grid, axis=0, keepdims=False), 0.1)
 
             #more softeing
             ind = [0 for i in range(self.dim)]
             ind_n = list(ind)
             ind_n[1] = 1
-            template[tuple(ind)] = 2*template[tuple(ind_n)]
+            template[tuple(ind)] = 0 # = template[tuple(ind_n)]
             plt.imshow(template)
             plt.show()
  
@@ -175,7 +175,7 @@ class Nbody:
             self.pos = self.pos + self.vel*self.dt/2
             if self.BC == "wrap":
                 #do the wrap around if particles left the grid
-                self.pos = self.pos%self.grid_size
+                self.pos = self.pos%1 # self.grid_size
             else:
                 print("need to implement walls")
                 raise ValueError
@@ -186,7 +186,7 @@ class Nbody:
         ##for CIcrucla rBC only
         if self.BC == "wrap":
             #do the wrap around if particles left the grid
-            self.pos = self.pos%self.grid_size
+            self.pos = self.pos%1 #self.grid_size
         else:
             print("need to implement walls")
             raise ValueError
@@ -206,7 +206,7 @@ class Nbody:
         t2 = time.time()
         
         #me messing with things
-        self.pot_debug = potential
+        self.pot = potential
 
         ##now get force field:
         #we need to roll a little to the right and a little to the left and take the difference
@@ -234,7 +234,7 @@ class Nbody:
             pos = np.zeros_like(vec)
             fast_diff(potential,derivatives[dim,:],vec, self.grid_size, dim,pos)
             """
-            derivatives[dim, :] = (np.roll(potential, -1, axis=dim) - np.roll(potential, 1, axis=dim))/(2*self.grid_size) 
+            derivatives[dim, :] = (np.roll(potential, -1, axis=dim) - np.roll(potential, 1, axis=dim))/(2/self.ref)
         t4=time.time()
         #print(t2-t1, t4-t3)
         #now for magic
@@ -261,9 +261,9 @@ class Nbody:
         return
     def calc_energy(self):
         ##compute the energy while we are at it
-        kinetic = np.sum(sp.linalg.norm(self.vel, axis=1)*self.m)
-        potential = np.sum(sp.linalg.norm(self.derivatives, axis=0 )**2)
-        assert(sp.linalg.norm(self.derivatives, axis=0 ).shape == self.grid.shape )
+        kinetic = np.sum((sp.linalg.norm(self.vel, axis=1)**2)*self.m)
+        potential = np.sum(self.pot* self.grid)/(self.grid.size)
+        # print("kinetic", kinetic, "potential", potential)
         return kinetic + potential
 
     
@@ -280,7 +280,7 @@ class Nbody:
         plt.show()
         return
 
-    def run_sim(self, steps = 1000, frame_return = 5):
+    def run_sim(self, steps = 10000, frame_return = 100):
         """
         Actually run the sim and return all the frames
         """
@@ -302,6 +302,9 @@ class Nbody:
                 frames.append(self.grid)
                 pos.append(self.pos)
                 print(self.calc_energy())
+                #print(self.vel)
+                # plt.imshow(self.pot)
+                # plt.show()
                 pass
         t2 = time.time()
         print((t2-t1)/100)
