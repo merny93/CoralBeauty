@@ -77,6 +77,7 @@ class Nbody:
         self.pot_template = self.make_template()
         self.pot_template_ft = self.make_template_ft()
         self.dt= dt
+        assert(self.grid.shape == self.pot_template.shape)
 
     def pos_to_grid(self, pos):
         """
@@ -107,54 +108,61 @@ class Nbody:
             return hash_grid
         elif self.BC == "hard":
             ##we need to pad
-            print("need to pad")
-            raise ValueError
+            pad_size = [[hash_grid.shape[i],hash_grid.shape[i]] for i in range(self.dim)]
+            return np.pad(hash_grid, pad_size)
             #return
         
     def make_template(self):
         """
         A very tryhard function which generates the potential centered around a corner
         """
-        if self.BC == "wrap":
-            #make the zeros template
-            template = np.zeros_like(self.grid, dtype=float)
+        
+        #make the zeros template
+        N = int(np.ceil(1/self.ref)) 
+        grid_shape = [N for _ in range(self.dim)]
+        template = np.zeros(grid_shape)
+        template = np.zeros_like(self.grid, dtype=float)
 
-            #generate a basis vector (this will not handle a non-square grid)
-            #said basis vector is rolled to have zero at index zero and then positive up to half way point and negative thereafter
-            idx = np.roll(np.arange(-template.shape[0]//2, template.shape[0]//2, dtype=float), template.shape[0]//2)
+        #generate a basis vector (this will not handle a non-square grid)
+        #said basis vector is rolled to have zero at index zero and then positive up to half way point and negative thereafter
+        idx = np.roll(np.arange(-template.shape[0]//2, template.shape[0]//2, dtype=float), template.shape[0]//2)
 
-            #we need dimension many basis vectors
-            basis_vec = np.array([idx for _ in range(self.dim)])
+        #we need dimension many basis vectors
+        basis_vec = np.array([idx for _ in range(self.dim)])
 
-            #this now created the distance grid from all our basis vectors 
-            dist_grid = np.array(np.meshgrid(*basis_vec))
-            
-            #replace the 0 in the top left corner
-            # ind = [0 for i in range(self.dim)]
-            #dist_grid[:, 0,0] = 0.5 #softening
-            #we need more softening
-            
-            #now rescale the dist grid 
+        #this now created the distance grid from all our basis vectors 
+        dist_grid = np.array(np.meshgrid(*basis_vec))
+        
+        #replace the 0 in the top left corner
+        # ind = [0 for i in range(self.dim)]
+        #dist_grid[:, 0,0] = 0.5 #softening
+        #we need more softening
+        
+        #now rescale the dist grid 
 
-            dist_grid = dist_grid/np.max(dist_grid) # * self.grid_size
+        dist_grid = dist_grid/np.max(dist_grid) # * self.grid_size
 
-            #generate the template using the potential function
-            #this is greens funciton
+        #generate the template using the potential function
+        #this is greens funciton
+        #to catch the divide by zero
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
             template = self.pot_func(np.linalg.norm(dist_grid, axis=0, keepdims=False), 0.1)
 
-            #more softeing
-            ind = [0 for i in range(self.dim)]
-            ind_n = list(ind)
-            ind_n[1] = 1
-            template[tuple(ind)] = template[tuple(ind_n)]
-            # plt.imshow(template)
-            # plt.show()
- 
+        #more softeing
+        ind = [0 for i in range(self.dim)]
+        ind_n = list(ind)
+        ind_n[1] = 1
+        template[tuple(ind)] = template[tuple(ind_n)]
+        # plt.imshow(template)
+        # plt.show()
+
+        if self.BC == "wrap":
             return template
         elif self.BC == "hard":
-            print("not implemented yet")
-            raise ValueError
-            #return
+            N = template.shape[0]
+            template[N//3:2*N//3, N//3:2*N//3] = 0
+            return template
     def make_template_ft(self):
         return  sp.fft.rfftn(self.pot_template)
     def make_pot(self):
@@ -177,8 +185,8 @@ class Nbody:
                 #do the wrap around if particles left the grid
                 self.pos = self.pos%1 # self.grid_size
             else:
-                print("need to implement walls")
-                raise ValueError
+                #hard walls will obviously not conseerver energy
+                self.pos = np.clip(self.pos, 0, 1)
             #now that we have new position rehash
             self.grid = self.hash()
             return
@@ -188,8 +196,8 @@ class Nbody:
             #do the wrap around if particles left the grid
             self.pos = self.pos%1 #self.grid_size
         else:
-            print("need to implement walls")
-            raise ValueError
+            #hard walls will obviously not conseerver energy
+            self.pos = np.clip(self.pos, 0, 1)
         #now that we have new position rehash
         self.grid = self.hash()
         return
@@ -198,13 +206,15 @@ class Nbody:
         """
         This is to compute the velocity from the field. A bit harder than the last 
         We compute the vector field everywhere first and then evaluate the force individually
+
+        when the boundary condition is non-periodic this function will be doing a lotttt of extra work
+        might fix later
         """
         #compute a new potential and calculate the force to step velocity
         #this function does the convolution
         t1 = time.time()
         potential = self.make_pot()
         t2 = time.time()
-        
         #me messing with things
         self.pot = potential
 
@@ -222,6 +232,8 @@ class Nbody:
 
         #get grid indexes
         grid_pos = self.pos_to_grid(self.pos)
+        if self.BC == "hard":
+            grid_pos = grid_pos + (np.array(self.grid.shape)//3)[np.newaxis, :]
 
         #this computes the gradiant stacking the dx,dy,dz... in axis=0 of derivatives
         t3 = time.time()
@@ -263,7 +275,11 @@ class Nbody:
         ##compute the energy while we are at it
         kinetic = np.sum((sp.linalg.norm(self.vel, axis=1)**2)*self.m)
         potential = np.sum(self.pot* self.grid)/(self.grid.size)
-        # print("kinetic", kinetic, "potential", potential)
+        ##substract out the self induced potential 
+        ind = [0 for i in range(self.dim)]
+        potential = potential - (np.sum(self.m)*self.pot_template[tuple(ind)])
+        #print("kinetic", kinetic, "potential", potential)
+        print(kinetic + potential)
         return kinetic + potential
 
     
@@ -285,9 +301,11 @@ class Nbody:
         Actually run the sim and return all the frames
         """
         import time
+        print("Running Sim, Depending on the grid size this can take a while....")
 
         frames = []
         pos = []
+        energy = []
         t1 = time.time()
         self.step_pos(half_step=True)
         for step_N in range(steps):
@@ -301,11 +319,8 @@ class Nbody:
             if step_N%frame_return == 0:
                 frames.append(self.grid)
                 pos.append(self.pos)
-                print(self.calc_energy())
-                #print(self.vel)
-                # plt.imshow(self.pot)
-                # plt.show()
+                energy.append(self.calc_energy())
                 pass
         t2 = time.time()
-        print((t2-t1)/100)
-        return {"density": frames, "position":pos}
+        print("time to compute a single step was:", (t2-t1)/steps)
+        return {"density": frames, "position":pos, "energy": energy}
