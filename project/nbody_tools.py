@@ -48,7 +48,7 @@ class Nbody:
 
     Run a simulation by calling run sim.
     """
-    def __init__(self, pos = None, vel = None, mass = None, potential = r_squared, dimension = 2, BC = "wrap", grid_size = 1, grid_ref = 1, dt=0.0005):
+    def __init__(self, pos = None, vel = None, mass = None, potential = r_squared, dimension = 2, BC = "wrap", grid_size = 1, grid_ref = 1, dt=0.001):
         """
         Take all the inputs and store them and do some precomputation work
         """
@@ -146,9 +146,9 @@ class Nbody:
             ind = [0 for i in range(self.dim)]
             ind_n = list(ind)
             ind_n[1] = 1
-            template[tuple(ind)] = 0 # = template[tuple(ind_n)]
-            plt.imshow(template)
-            plt.show()
+            template[tuple(ind)] = template[tuple(ind_n)]
+            # plt.imshow(template)
+            # plt.show()
  
             return template
         elif self.BC == "hard":
@@ -280,7 +280,7 @@ class Nbody:
         plt.show()
         return
 
-    def run_sim(self, steps = 10000, frame_return = 100):
+    def run_sim(self, steps = 5000, frame_return = 25):
         """
         Actually run the sim and return all the frames
         """
