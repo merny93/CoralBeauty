@@ -145,9 +145,10 @@ class Nbody:
         #generate the template using the potential function
         #this is greens funciton
         #to catch the divide by zero
+        self.k = 0.1
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            template = self.pot_func(np.linalg.norm(dist_grid, axis=0, keepdims=False), 0.1)
+            template = self.pot_func(np.linalg.norm(dist_grid, axis=0, keepdims=False),self.k)
 
         #more softeing
         ind = [0 for i in range(self.dim)]
@@ -278,8 +279,9 @@ class Nbody:
         ##substract out the self induced potential 
         ind = [0 for i in range(self.dim)]
         potential = potential - (np.sum(self.m)*self.pot_template[tuple(ind)])
+        potential = potential*self.k
         #print("kinetic", kinetic, "potential", potential)
-        print(kinetic + potential)
+        #print(kinetic + potential)
         return kinetic + potential
 
     
@@ -302,6 +304,7 @@ class Nbody:
         """
         import time
         print("Running Sim, Depending on the grid size this can take a while....")
+        print("expected time to run is:", 2e-7*self.grid.size*steps, "seconds")
 
         frames = []
         pos = []
@@ -322,5 +325,5 @@ class Nbody:
                 energy.append(self.calc_energy())
                 pass
         t2 = time.time()
-        print("time to compute a single step was:", (t2-t1)/steps)
+        print("Actually took:", ((t2-t1)), "seconds")
         return {"density": frames, "position":pos, "energy": energy}
